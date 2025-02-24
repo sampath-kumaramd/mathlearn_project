@@ -127,3 +127,42 @@ class CulturalProblemGenerator:
             "total_items": total_items,
             "target_items": target_items
         }
+
+def generate_training_dataset(num_problems=1000):
+    """Generate training dataset for math problems"""
+    
+    # Initialize problem generator
+    problem_generator = CulturalProblemGenerator()
+    
+    # Topics and difficulties to generate problems for
+    topics = ["addition", "subtraction", "multiplication", "division"]
+    difficulties = range(1, 11)  # 1-10 difficulty levels
+    
+    # Generate problems
+    problems = []
+    for topic in topics:
+        for difficulty in difficulties:
+            # Generate multiple problems per difficulty level
+            for _ in range(num_problems // (len(topics) * len(difficulties))):
+                problem = problem_generator.generate_problem(topic, difficulty)
+                if problem:
+                    problems.append({
+                        "text": problem["question"],
+                        "answer": str(problem["answer"]),
+                        "type": problem["type"],
+                        "difficulty": problem["difficulty"],
+                        "context_type": problem["context_type"]
+                    })
+    
+    # Ensure output directory exists
+    os.makedirs("data/processed", exist_ok=True)
+    
+    # Save to JSON file
+    output_file = "data/processed/math_problems.json"
+    with open(output_file, "w", encoding="utf-8") as f:
+        json.dump({"problems": problems}, f, ensure_ascii=False, indent=2)
+    
+    print(f"Generated {len(problems)} problems and saved to {output_file}")
+
+if __name__ == "__main__":
+    generate_training_dataset()
