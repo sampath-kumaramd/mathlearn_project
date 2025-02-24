@@ -111,7 +111,7 @@ def main():
     
     # Training arguments
     training_args = TrainingArguments(
-        output_dir="outputs",
+        output_dir="outputs/checkpoints",  # Changed to separate checkpoints
         num_train_epochs=3,
         per_device_train_batch_size=4,
         gradient_accumulation_steps=4,
@@ -141,8 +141,11 @@ def main():
     # Start training
     trainer.train()
     
-    # Save model
-    trainer.save_model("final_model")
+    # Save the final model and tokenizer
+    final_output_dir = "outputs/final_model"
+    model.save_pretrained(final_output_dir)
+    tokenizer.save_pretrained(final_output_dir)
+    print(f"Model saved to {final_output_dir}")
 
 def run_training():
     # Check GPU availability
