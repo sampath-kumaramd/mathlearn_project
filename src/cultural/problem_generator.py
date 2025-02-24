@@ -7,122 +7,123 @@ from datetime import datetime
 
 class CulturalProblemGenerator:
     def __init__(self):
-        # Load cultural contexts
-        self.contexts = self._load_contexts()
-        self.rural_urban_ratio = 0.6  # 60% rural as per requirements
-        
-    def _load_contexts(self):
-        """Load cultural contexts for problem generation"""
-        try:
-            file_path = os.path.join(os.path.dirname(__file__), 
-                                   '../data/cultural_contexts.json')
-            
-            if os.path.exists(file_path):
-                with open(file_path, 'r', encoding='utf-8') as file:
-                    return json.load(file)
-            else:
-                # Default contexts if file doesn't exist
-                return {
-                    "rural": [
-                        "farming", "agriculture", "irrigation", "harvest",
-                        "fishing", "village", "temple"
-                    ],
-                    "urban": [
-                        "transportation", "building", "shopping", "school",
-                        "office", "factory"
-                    ],
-                    "festivals": [
-                        {"name": "Poson Poya", "month": 6},
-                        {"name": "Vesak", "month": 5},
-                        {"name": "Sinhala and Tamil New Year", "month": 4},
-                        {"name": "Thai Pongal", "month": 1}
-                    ],
-                    "agricultural": [
-                        "paddy field", "tea plantation", "coconut grove",
-                        "vegetable garden", "irrigation tank"
-                    ]
-                }
-        except Exception as e:
-            print(f"Error loading cultural contexts: {e}")
-            return {}
-    
-    def generate_problem(self, problem_type, difficulty=1):
-        """Generate a culturally contextualized math problem"""
-        # Determine if rural or urban context based on ratio
-        context_type = "rural" if random.random() < self.rural_urban_ratio else "urban"
-        
-        # Check if it's festival season for probability problems
-        current_month = datetime.now().month
-        festival_context = None
-        for festival in self.contexts.get("festivals", []):
-            if festival["month"] == current_month:
-                festival_context = festival["name"]
-                break
-        
-        # Generate problem based on type
-        if problem_type == "addition":
-            return self._generate_addition_problem(context_type, difficulty, festival_context)
-        elif problem_type == "subtraction":
-            return self._generate_subtraction_problem(context_type, difficulty, festival_context)
-        elif problem_type == "multiplication":
-            return self._generate_multiplication_problem(context_type, difficulty, festival_context)
-        elif problem_type == "division":
-            return self._generate_division_problem(context_type, difficulty, festival_context)
-        elif problem_type == "probability":
-            return self._generate_probability_problem(context_type, difficulty, festival_context)
-        else:
-            return {"error": "Unknown problem type"}
-    
-    def _generate_addition_problem(self, context_type, difficulty, festival_context):
-        """Generate addition problem with cultural context"""
-        # Scale difficulty (1-10)
-        max_num = 10 * difficulty
-        
-        a = random.randint(1, max_num)
-        b = random.randint(1, max_num)
-        answer = a + b
-        
-        # Context templates
-        templates = {
-            "rural": [
-                f"ගොවියෙක් මුලින් කිලෝග්‍රෑම් {a} ක් සහ පසුව කිලෝග්‍රෑම් {b} ක් වී අස්වනු ලබා ගත්තේය. ඔහු මුළු වශයෙන් කොපමණ වී ප්‍රමාණයක් ලබා ගත්තේද?",
-                f"ගම්මානයේ ළමයින් {a} දෙනෙක් සහ වැඩිහිටියන් {b} දෙනෙක් පන්සලට ගියහ. පන්සලට ගිය මුළු ජන ගණන කීයද?"
-            ],
-            "urban": [
-                f"බස් රථයේ මුලින් මගීන් {a} දෙනෙක් සිටි අතර, ඊළඟ නැවතුමේදී තවත් මගීන් {b} දෙනෙක් නැග්ගහ. දැන් බස් රථයේ සිටින මුළු මගීන් ගණන කීයද?",
-                f"සාප්පුවේ රුපියල් {a} ක් වටිනා පොතක් සහ රුපියල් {b} ක් වටිනා පැන්සලක් මිලදී ගතී. ඇය මුළු වශයෙන් කොපමණ මුදලක් වියදම් කළාද?"
-            ]
+        self.contexts = {
+            "rural": ["ගොවිපල", "කුඹුර", "වත්ත", "ගම්මානය"],
+            "urban": ["පාසල", "සාප්පුව", "බස් රථය", "කඩය"]
         }
         
-        # Select template
-        if festival_context and random.random() < 0.3:  # 30% chance for festival context
-            question = f"{festival_context} සමයේදී ගමේ වැසියන් කුඩා පහන් {a} ක් සහ විශාල පහන් {b} ක් දැල්වූහ. ඔවුන් මුළු වශයෙන් කොපමණ පහන් ගණනක් දැල්වූවාද?"
-        else:
-            templates_list = templates.get(context_type, templates["rural"])
-            question = random.choice(templates_list)
+    def generate_problem(self, topic, difficulty):
+        """Generate a culturally relevant math problem"""
+        context_type = "rural" if random.random() < 0.6 else "urban"  # 60:40 ratio
+        context = random.choice(self.contexts[context_type])
+        
+        if topic == "addition":
+            return self._generate_addition_problem(context, difficulty)
+        elif topic == "subtraction":
+            return self._generate_subtraction_problem(context, difficulty)
+        elif topic == "multiplication":
+            return self._generate_multiplication_problem(context, difficulty)
+        elif topic == "division":
+            return self._generate_division_problem(context, difficulty)
+        elif topic == "probability":
+            return self._generate_probability_problem(context, difficulty)
+            
+        return None
+        
+    def _generate_addition_problem(self, context, difficulty):
+        """Generate addition problem with cultural context"""
+        # Generate numbers based on difficulty
+        num1 = random.randint(1, difficulty * 10)
+        num2 = random.randint(1, difficulty * 10)
+        
+        question = f"{context}ට පළමුව {num1} ක් සහ පසුව {num2} ක් එකතු විය. මුළු එකතුව කීයද?"
         
         return {
-            "question": question,
-            "answer": answer,
             "type": "addition",
             "difficulty": difficulty,
-            "context_type": context_type,
-            "festival_context": festival_context
+            "question": question,
+            "answer": num1 + num2,
+            "context_type": "rural" if context in self.contexts["rural"] else "urban"
+        }
+        
+    def _generate_subtraction_problem(self, context, difficulty):
+        """Generate subtraction problem with cultural context"""
+        total = random.randint(difficulty * 10, difficulty * 20)
+        subtract = random.randint(1, total)
+        
+        question = f"{context}ේ මුලින් {total} ක් තිබුණි. පසුව {subtract} ක් ඉවත් කළ විට ඉතිරි වූයේ කීයද?"
+        
+        return {
+            "type": "subtraction",
+            "difficulty": difficulty,
+            "question": question,
+            "answer": total - subtract,
+            "context_type": "rural" if context in self.contexts["rural"] else "urban"
         }
     
-    # Additional methods for other problem types would follow similar pattern
-    def _generate_subtraction_problem(self, context_type, difficulty, festival_context):
-        # Implementation for subtraction problems
-        pass
+    def _generate_multiplication_problem(self, context, difficulty):
+        """Generate multiplication problem with cultural context"""
+        # Generate numbers based on difficulty
+        num1 = random.randint(1, difficulty * 5)
+        num2 = random.randint(1, difficulty * 5)
+        
+        question = f"{context}ේ එක් පේළියක {num1} බැගින් පේළි {num2} ක් ඇත. මුළු ගණන කීයද?"
+        
+        return {
+            "type": "multiplication",
+            "difficulty": difficulty,
+            "question": question,
+            "answer": num1 * num2,
+            "context_type": "rural" if context in self.contexts["rural"] else "urban"
+        }
     
-    def _generate_multiplication_problem(self, context_type, difficulty, festival_context):
-        # Implementation for multiplication problems
-        pass
+    def _generate_division_problem(self, context, difficulty):
+        """Generate division problem with cultural context"""
+        # Generate numbers based on difficulty
+        divisor = random.randint(2, difficulty * 2)
+        quotient = random.randint(1, difficulty * 5)
+        total = divisor * quotient
+        
+        question = f"{context}ේ {total} ක් {divisor} දෙනෙකු අතර සමව බෙදිය යුතුය. එක් අයෙකුට කීයක් බැගින් හිමිවේද?"
+        
+        return {
+            "type": "division",
+            "difficulty": difficulty,
+            "question": question,
+            "answer": quotient,
+            "context_type": "rural" if context in self.contexts["rural"] else "urban"
+        }
     
-    def _generate_division_problem(self, context_type, difficulty, festival_context):
-        # Implementation for division problems
-        pass
-    
-    def _generate_probability_problem(self, context_type, difficulty, festival_context):
-        # Implementation for probability problems with cultural relevance
-        pass
+    def _generate_probability_problem(self, context, difficulty):
+        """Generate probability problem with cultural context"""
+        # Generate numbers based on difficulty
+        total_items = random.randint(difficulty * 5, difficulty * 10)
+        target_items = random.randint(1, total_items)
+        
+        # Create culturally relevant probability questions
+        question_types = [
+            # Type 1: Simple probability with fruits/vegetables
+            lambda: f"{context}ේ {total_items} ක් අතරින් {target_items} ක් ගෙඩි ඇත. අහඹු ලෙස එක් ගෙඩියක් තෝරා ගැනීමේ සම්භාවිතාව කීයද?",
+            
+            # Type 2: Probability with students
+            lambda: f"{context}ේ සිටින {total_items} දෙනා අතරින් {target_items} දෙනෙක් ශිෂ්‍යයන් වේ. අහඹු ලෙස කෙනෙකු තෝරා ගැනීමේදී ඔහු/ඇය ශිෂ්‍යයෙකු වීමේ සම්භාවිතාව කීයද?",
+            
+            # Type 3: Weather-based probability
+            lambda: f"පසුගිය {total_items} දිනයන් අතරින් {target_items} දිනයන්හි වැසි ලැබිණි. ඊළඟ දිනයේ වැසි ලැබීමේ සම්භාවිතාව කීයද?"
+        ]
+        
+        # Select random question type
+        question = random.choice(question_types)()
+        
+        # Calculate probability as a fraction
+        answer = f"{target_items}/{total_items}"
+        
+        return {
+            "type": "probability",
+            "difficulty": difficulty,
+            "question": question,
+            "answer": answer,
+            "context_type": "rural" if context in self.contexts["rural"] else "urban",
+            "total_items": total_items,
+            "target_items": target_items
+        }
