@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>AI-Enhanced Mathematics Learning</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        max-width: 800px;
+        margin: 0 auto;
+        padding: 20px;
+      }
+      h1 {
+        color: #2c3e50;
+      }
+      .form-group {
+        margin-bottom: 20px;
+      }
+      label {
+        display: block;
+        margin-bottom: 5px;
+      }
+      input,
+      button {
+        padding: 10px;
+        font-size: 16px;
+      }
+      button {
+        background-color: #3498db;
+        color: white;
+        border: none;
+        cursor: pointer;
+      }
+      button:hover {
+        background-color: #2980b9;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>AI-Enhanced Mathematics Learning</h1>
+
+    <div class="form-group">
+      <label for="equation">Enter a mathematical equation:</label>
+      <input type="text" id="equation" placeholder="E.g., 2 + 2 = 4" />
+      <button onclick="speakEquation()">Speak Equation</button>
+    </div>
+
+    <div class="form-group">
+      <label for="text">Enter text:</label>
+      <input type="text" id="text" placeholder="Enter text to speak" />
+      <button onclick="speakText()">Speak Text</button>
+    </div>
+
+    <script>
+      function speakEquation() {
+        const equation = document.getElementById("equation").value;
+
+        fetch("/api/speak_equation", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ equation: equation }),
+        })
+          .then((response) => response.json())
+          .then((data) => {
+            console.log("Success:", data);
+          })
+          .catch((error) => {
+            console.error("Error:", error);
+          });
+      }
+
+      function speakText() {
+        const text = document.getElementById("text").value;
+
+        fetch("/api/speak", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ text: text }),
+        })
+          .then((response) => response.json())
+          .then((data) => {
+            console.log("Success:", data);
+          })
+          .catch((error) => {
+            console.error("Error:", error);
+          });
+      }
+    </script>
+  </body>
+</html>

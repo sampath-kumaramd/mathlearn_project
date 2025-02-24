@@ -1,0 +1,355 @@
+<!-- templates/dashboard.html -->
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>AI-Enhanced Mathematics Learning</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        margin: 0;
+        padding: 0;
+        background-color: #f8f9fa;
+      }
+      .container {
+        max-width: 1000px;
+        margin: 0 auto;
+        padding: 20px;
+      }
+      header {
+        background-color: #343a40;
+        color: white;
+        padding: 20px;
+        text-align: center;
+      }
+      .lesson-container {
+        background-color: white;
+        border-radius: 8px;
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        margin: 20px 0;
+        padding: 20px;
+      }
+      .problem-container {
+        border-left: 4px solid #007bff;
+        padding: 10px 20px;
+        margin: 20px 0;
+        background-color: #f8f9fa;
+      }
+      button {
+        background-color: #007bff;
+        color: white;
+        border: none;
+        padding: 10px 15px;
+        border-radius: 4px;
+        cursor: pointer;
+        margin-right: 10px;
+      }
+      button:hover {
+        background-color: #0069d9;
+      }
+      input {
+        padding: 10px;
+        border: 1px solid #ced4da;
+        border-radius: 4px;
+        width: 200px;
+        margin-right: 10px;
+      }
+      .feedback {
+        padding: 10px;
+        margin-top: 10px;
+        border-radius: 4px;
+      }
+      .correct {
+        background-color: #d4edda;
+        color: #155724;
+      }
+      .incorrect {
+        background-color: #f8d7da;
+        color: #721c24;
+      }
+      .topic-selector {
+        margin: 20px 0;
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <h1>AI-Enhanced Mathematics Learning</h1>
+      <p>A personalized learning experience for visually impaired students</p>
+    </header>
+
+    <div class="container">
+      <div class="topic-selector">
+        <h2>Select a Topic:</h2>
+        <button onclick="loadLesson('addition')">Addition</button>
+        <button onclick="loadLesson('subtraction')">Subtraction</button>
+        <button onclick="loadLesson('multiplication')">Multiplication</button>
+        <button onclick="loadLesson('division')">Division</button>
+      </div>
+
+      <div class="lesson-container" id="lesson-content">
+        <h2 id="lesson-title">Select a topic to begin</h2>
+        <div id="lesson-introduction"></div>
+
+        <div id="examples-section">
+          <h3>Examples:</h3>
+          <div id="examples-content"></div>
+        </div>
+
+        <div id="problems-section">
+          <h3>Practice Problems:</h3>
+          <div id="current-problem"></div>
+
+          <div id="answer-section" style="display: none">
+            <input type="text" id="user-answer" placeholder="Your answer" />
+            <button onclick="checkAnswer()">Submit</button>
+            <button onclick="speakProblem()">Speak Problem</button>
+            <button onclick="getHint()">Get Hint</button>
+
+            <div id="feedback-container" class="feedback"></div>
+          </div>
+
+          <button
+            id="next-problem-btn"
+            onclick="nextProblem()"
+            style="display: none"
+          >
+            Next Problem
+          </button>
+        </div>
+      </div>
+
+      <div class="lesson-container">
+        <h2>Your Progress</h2>
+        <button onclick="loadProgress()">View Progress Report</button>
+        <div id="progress-content"></div>
+      </div>
+    </div>
+
+    <script>
+      // Global variables
+      let currentLesson = null;
+      let currentProblemIndex = 0;
+
+      // Load a lesson for the selected topic
+      function loadLesson(topic) {
+        fetch(`/api/get_lesson?topic=${topic}`)
+          .then((response) => response.json())
+          .then((data) => {
+            currentLesson = data.lesson;
+            currentProblemIndex = 0;
+
+            // Update UI
+            document.getElementById(
+              "lesson-title"
+            ).textContent = `Lesson: ${currentLesson.topic} (Level ${currentLesson.difficulty})`;
+            document.getElementById("lesson-introduction").textContent =
+              currentLesson.introduction;
+
+            // Load examples
+            const examplesContent = document.getElementById("examples-content");
+            examplesContent.innerHTML = "";
+
+            currentLesson.examples.forEach((example, index) => {
+              const exampleDiv = document.createElement("div");
+              exampleDiv.className = "problem-container";
+              exampleDiv.innerHTML = `
+                            <h4>Example ${index + 1}:</h4>
+                            <p>${example.question}</p>
+                            <div>
+                                <button onclick="speakText('${
+                                  example.question
+                                }')">Speak Example</button>
+                                <button onclick="toggleSolution(${index})">Show/Hide Solution</button>
+                            </div>
+                            <div id="solution-${index}" style="display: none; margin-top: 10px;">
+                                <h5>Solution:</h5>
+                                <ol>
+                                    ${example.solution_steps
+                                      .map((step) => `<li>${step}</li>`)
+                                      .join("")}
+                                </ol>
+                            </div>
+                        `;
+              examplesContent.appendChild(exampleDiv);
+            });
+
+            // Load first problem
+            loadProblem();
+
+            // Speak introduction automatically
+            speakText(currentLesson.introduction);
+          });
+      }
+
+      // Toggle solution visibility
+      function toggleSolution(index) {
+        const solutionDiv = document.getElementById(`solution-${index}`);
+        if (solutionDiv.style.display === "none") {
+          solutionDiv.style.display = "block";
+        } else {
+          solutionDiv.style.display = "none";
+        }
+      }
+
+      // Load the current problem
+      function loadProblem() {
+        if (
+          !currentLesson ||
+          !currentLesson.problems ||
+          currentProblemIndex >= currentLesson.problems.length
+        ) {
+          document.getElementById("current-problem").innerHTML =
+            "<p>No more problems in this lesson. Select another topic.</p>";
+          document.getElementById("answer-section").style.display = "none";
+          document.getElementById("next-problem-btn").style.display = "none";
+          return;
+        }
+
+        const problem = currentLesson.problems[currentProblemIndex];
+
+        document.getElementById("current-problem").innerHTML = `
+                <div class="problem-container">
+                    <h4>Problem ${currentProblemIndex + 1}:</h4>
+                    <p>${problem.question}</p>
+                </div>
+            `;
+
+        document.getElementById("answer-section").style.display = "block";
+        document.getElementById("user-answer").value = "";
+        document.getElementById("feedback-container").innerHTML = "";
+        document.getElementById("feedback-container").className = "feedback";
+        document.getElementById("next-problem-btn").style.display = "none";
+
+        // Speak the problem automatically
+        speakProblem();
+      }
+
+      // Check the user's answer
+      function checkAnswer() {
+        const userAnswer = document.getElementById("user-answer").value;
+        const problem = currentLesson.problems[currentProblemIndex];
+
+        fetch("/api/check_answer", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            problem: problem,
+            answer: userAnswer,
+          }),
+        })
+          .then((response) => response.json())
+          .then((data) => {
+            // Display feedback
+            const feedbackContainer =
+              document.getElementById("feedback-container");
+            feedbackContainer.innerHTML = `<p>${data.feedback_text}</p>`;
+            feedbackContainer.className = `feedback ${
+              data.is_correct ? "correct" : "incorrect"
+            }`;
+
+            if (data.explanation) {
+              feedbackContainer.innerHTML += `<p>${data.explanation}</p>`;
+            }
+
+            // Speak feedback
+            speakText(
+              data.feedback_text +
+                (data.explanation ? " " + data.explanation : "")
+            );
+
+            // Show next problem button
+            document.getElementById("next-problem-btn").style.display = "block";
+          });
+      }
+
+      // Move to next problem
+      function nextProblem() {
+        currentProblemIndex++;
+        loadProblem();
+      }
+
+      // Speak the current problem
+      function speakProblem() {
+        if (
+          currentLesson &&
+          currentLesson.problems &&
+          currentProblemIndex < currentLesson.problems.length
+        ) {
+          const problem = currentLesson.problems[currentProblemIndex];
+          speakText(problem.question);
+        }
+      }
+
+      // Get a hint for the current problem
+      function getHint() {
+        // This would connect to a more sophisticated hint system in a full implementation
+        alert("Hint functionality would be implemented here.");
+      }
+
+      // Load progress report
+      function loadProgress() {
+        fetch("/api/get_progress")
+          .then((response) => response.json())
+          .then((data) => {
+            const progressContent = document.getElementById("progress-content");
+
+            // Simple progress display
+            let progressHTML = `
+                        <h3>Report Date: ${new Date().toLocaleDateString()}</h3>
+                        <h4>Overall Progress: ${data.overall_progress.current_level.toFixed(
+                          1
+                        )}/10</h4>
+                        
+                        <h4>Topic Progress:</h4>
+                        <ul>
+                    `;
+
+            for (const [topic, progress] of Object.entries(
+              data.topic_progress
+            )) {
+              progressHTML += `<li>${topic}: ${progress.current_level.toFixed(
+                1
+              )}/10</li>`;
+            }
+
+            progressHTML += `</ul><h4>Recommendations:</h4><ul>`;
+
+            data.recommendations.forEach((rec) => {
+              progressHTML += `<li>Focus on ${rec.topic}: ${rec.reason}</li>`;
+            });
+
+            progressHTML += `</ul>`;
+
+            progressContent.innerHTML = progressHTML;
+
+            // Speak a summary
+            speakText(
+              `Your overall progress is ${data.overall_progress.current_level.toFixed(
+                1
+              )} out of 10. We recommend focusing on ${
+                data.recommendations[0]?.topic || "all topics"
+              }.`
+            );
+          });
+      }
+
+      // Speak text using the TTS engine
+      function speakText(text, isEquation = false) {
+        fetch("/api/speak", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            text: text,
+            is_equation: isEquation,
+          }),
+        });
+      }
+    </script>
+  </body>
+</html>
